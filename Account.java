@@ -8,15 +8,12 @@ public class Account {
     private String first, last, country, email, username;
     private int id; // user id
     private String password; // hexadecimal representation of hashed bytes of String password
-    private int numberOfChats; // number of chats this user has participated in
-    private int numberOfInterests; // number of interests this user has added
 
     // constructor
-    public Account(String first, String last, String country, String email, String username, String password,
+    public Account(String first, String last, String email, String username, String password,
     HashMap<Integer, Account> idToAcc) {
         this.first = first;
         this.last = last;
-        this.country = country;
         this.email = email;
         this.username = username;
         this.password = password;
@@ -24,8 +21,8 @@ public class Account {
     }
 
     // creates new account
-    public static void create(String f, String l, String c, String e, String u, String p,
-    HashMap<String, String> loginInfo, HashMap<String, Integer> userToID, HashMap<Integer, Account> idToAcc) {
+    public static void create(String f, String l, String e, String u, String p, HashMap<String, String> loginInfo,
+    HashMap<String, Integer> userToID, HashMap<Integer, Account> idToAcc) {
 
         // check if arguments are allowed
         checkProfanity(f);

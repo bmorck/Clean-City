@@ -5,7 +5,7 @@ import java.lang.StringBuilder;
 
 public class Account {
 
-    private String first, last, country, email, username;
+    private String first, last, email, username;
     private int id; // user id
     private String password; // hexadecimal representation of hashed bytes of String password
 

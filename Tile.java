@@ -16,7 +16,7 @@ private static HashMap<Integer, Integer> tileToID = new HashMap<Integer, Integer
     }
 
     public static void freeTile(int tile) {
-        if (!tileToID.containsKey(tile))
+        if (tileToID.containsValue(id))
         throw new IllegalArgumentException("Tile is already free");
 
         else

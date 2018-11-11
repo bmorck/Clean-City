@@ -2,7 +2,9 @@ import java.util.HashMap;
 
 public class Tile {
 
-    public static void claimTile(int tile, int id, HashMap<Integer, Integer> tileToID) {
+private static HashMap<Integer, Integer> tileToID = new HashMap<Integer, Integer>();
+
+    public static void claimTile(int tile, int id) {
         if (tile == 0)
         throw new IllegalArgumentException("Error!");
 
@@ -13,7 +15,7 @@ public class Tile {
         tileToID.put(tile, id);
     }
 
-    public static void freeTile(int tile, HashMap<Integer, Integer> tileToID) {
+    public static void freeTile(int tile) {
         if (!tileToID.containsKey(tile))
         throw new IllegalArgumentException("Tile is already free");
 

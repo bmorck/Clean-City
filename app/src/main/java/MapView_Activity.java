@@ -19,6 +19,7 @@ package chukuzoegwu.cleancity;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -31,6 +32,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.example.clean_city.PermissionUtils;
+import com.example.clean_city.R;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -41,8 +44,10 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.TileProvider;
+import com.google.android.gms.maps.model.Polygon;
 
 import java.io.IOException;
 import java.util.List;
@@ -82,13 +87,18 @@ public class MapView_Activity extends AppCompatActivity
     private GoogleMap mMap;
     private Geocoder geocoder;
     private GoogleMapOptions mMapOptions;
+    private boolean gotCoords = false;
+    private LatLng loc;
+    private Polygon polygon;
+    //baiscally acts as isSelected?
+    private boolean polygonVisibility = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_map_views);
+        //setContentView(R.layout.activity_map_views);
 
-        claimButton = findViewById(R.id.claimButton);
+        //claimButton = findViewById(R.id.claimButton);
         tileSelected = false;
 
         SupportMapFragment mapFragment =
@@ -104,6 +114,7 @@ public class MapView_Activity extends AppCompatActivity
         mMap.setOnMyLocationButtonClickListener(this);
         mMap.setOnMyLocationClickListener(this);
         enableMyLocation();
+        map.moveCamera( CameraUpdateFactory.zoomTo(18.0f) );
     }
 
     /**
@@ -125,12 +136,12 @@ public class MapView_Activity extends AppCompatActivity
             double lat = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLatitude();
             double lon = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER).getLongitude();
             LatLng newLatLng = new LatLng(lat, lon);
-            CameraPosition cp = CameraPosition.fromLatLngZoom(newLatLng, 18);
+            CameraPosition cp = CameraPosition.fromLatLngZoom(newLatLng, 12);
             CameraUpdate point = CameraUpdateFactory.newCameraPosition(cp);
             mMap.animateCamera(point);
 
             // Overlays the map with tiles
-            TileProvider coordTileProvider = new chukuzoegwu.cleancity.CoordTileProvider(this.getApplicationContext());
+            TileProvider coordTileProvider = new com.example.clean_city.CoordTileProvider(this.getApplicationContext());
             mMap.addTileOverlay(new TileOverlayOptions().tileProvider(coordTileProvider));
             mMap.getUiSettings().setZoomControlsEnabled(false);
             mMap.getUiSettings().setZoomGesturesEnabled(false);
@@ -150,9 +161,19 @@ public class MapView_Activity extends AppCompatActivity
         //Toast.makeText(this, "Current location:\n" + location, Toast.LENGTH_LONG).show();
         double lat = location.getLatitude();
         double lng = location.getLongitude();
+        loc = new LatLng(lat,lng);
+        if(gotCoords)
+            polygon.remove();
         if (reverseGeocode(lat, lng, 1) != null) {
             String place = reverseGeocode(lat, lng, 1);
-            Toast.makeText(this, place, Toast.LENGTH_LONG).show();
+            //Toast.makeText(this, place, Toast.LENGTH_LONG).show();
+            gotCoords = true;
+            long toHash = getCoordinateCat();
+            LatLng coords = tileToLatLng(toHash);
+            if(polygonVisibility)
+                polygon.remove();
+            polygonVisibility = !polygonVisibility;
+            //Toast.makeText(this, polygonVisibility + "", Toast.LENGTH_SHORT).show();
         }
         else {
             Toast.makeText(this, "Something is wrong!", Toast.LENGTH_LONG).show();
@@ -171,6 +192,43 @@ public class MapView_Activity extends AppCompatActivity
         //return addresses.get(0).getAddressLine(0);
         //return addresses.get(0).getFeatureName();
         return addresses.get(0).getAddressLine(0);
+    }
+
+    private double project(LatLng loc) {
+        double siny = Math.sin(loc.latitude * Math.PI / 180);
+        siny = Math.min(Math.max(siny, -0.9999), 0.9999);
+        double lat = 256 * (0.5 + loc.longitude / 360);
+        double lng = 256 * (0.5 - Math.log((1 + siny ) / (1 - siny)) / (4 * Math.PI));
+        double x = Math.floor(lat*(Math.pow(2, 18))/256);
+        double y = Math.floor(lng*(Math.pow(2, 18))/256);
+        double sum = x + y/1000000;
+        return sum;
+    }
+
+    public long getCoordinateCat() {
+        if (gotCoords != true)
+        {
+            Toast.makeText(this, "Please Tap The Location Button at the Top Right of the Screen", Toast.LENGTH_LONG).show();
+            return 0;
+        }
+        else {
+            double tileHash = project(loc);
+            return (long) (tileHash*1000000);
+        }
+    }
+
+    public LatLng tileToLatLng(long cat) {
+        int x = (int) (cat/1000000.0);
+        int y = (int) (cat - x * 1000000.0);
+        double lng = x/Math.pow(2,18)*360-180;
+        double n = Math.PI - 2*Math.PI*y/Math.pow(2,18);
+        double lat = (180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n))));
+        LatLng temp = new LatLng(lat,lng);
+        // Toast.makeText(this, lat + " " + lng, Toast.LENGTH_LONG).show();
+        polygon = mMap.addPolygon(new PolygonOptions()
+                .add(new LatLng(lat, lng), new LatLng(lat-.00105, lng), new LatLng(lat-.00105, lng+.001383), new LatLng(lat, lng+.001383))
+                .strokeColor(Color.RED));
+        return temp;
     }
 
     @Override

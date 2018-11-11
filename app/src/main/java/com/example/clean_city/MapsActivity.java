@@ -25,10 +25,13 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Polygon;
+import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.android.gms.maps.model.TileProvider;
 
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -76,6 +79,9 @@ public class MapsActivity extends AppCompatActivity
     private Geocoder geocoder;
     private LatLng loc;
     private boolean gotCoords = false;
+    private Polygon polygon;
+    //baiscally acts as isSelected?
+    private boolean polygonVisibility = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,17 +122,15 @@ public class MapsActivity extends AppCompatActivity
             mMap.getUiSettings().setZoomGesturesEnabled(false);
             mMap.setMaxZoomPreference(18);
             mMap.setMinZoomPreference(18);
+            TileProvider coordTileProvider = new com.example.clean_city.CoordTileProvider(this.getApplicationContext());
+            mMap.addTileOverlay(new TileOverlayOptions().tileProvider(coordTileProvider));
         }
     }
-
     @Override
     public boolean onMyLocationButtonClick() {
-        Toast.makeText(this, "MyLocation button clicked", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Current Location button clicked", Toast.LENGTH_SHORT).show();
         // Return false so that we don't consume the event and the default behavior still occurs
         // (the camera animates to the user's current position).
-        TileProvider coordTileProvider = new com.example.clean_city.CoordTileProvider(this.getApplicationContext());
-        mMap.addTileOverlay(new TileOverlayOptions().tileProvider(coordTileProvider));
-        gotCoords = true;
         return false;
     }
 
@@ -135,17 +139,25 @@ public class MapsActivity extends AppCompatActivity
         //Toast.makeText(this, "Current location:\n" + location, Toast.LENGTH_LONG).show();
         double lat = location.getLatitude();
         double lng = location.getLongitude();
-        loc = new LatLng(lat, lng);
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(loc, 18));
+        loc = new LatLng(lat,lng);
+        if(gotCoords)
+            polygon.remove();
         if (reverseGeocode(lat, lng, 1) != null) {
             String place = reverseGeocode(lat, lng, 1);
-            Toast.makeText(this, place, Toast.LENGTH_LONG).show();
-            getCoordinateCat();
+            //Toast.makeText(this, place, Toast.LENGTH_LONG).show();
+            gotCoords = true;
+            long toHash = getCoordinateCat();
+            LatLng coords = tileToLatLng(toHash);
+            if(polygonVisibility)
+                polygon.remove();
+            polygonVisibility = !polygonVisibility;
+            //Toast.makeText(this, polygonVisibility + "", Toast.LENGTH_SHORT).show();
         }
         else {
             Toast.makeText(this, "Something is wrong!", Toast.LENGTH_LONG).show();
         }
     }
+
     private double project(LatLng loc) {
         double siny = Math.sin(loc.latitude * Math.PI / 180);
         siny = Math.min(Math.max(siny, -0.9999), 0.9999);
@@ -156,7 +168,8 @@ public class MapsActivity extends AppCompatActivity
         double sum = x + y/1000000;
         return sum;
     }
-    public int getCoordinateCat() {
+
+    public long getCoordinateCat() {
         if (gotCoords != true)
         {
             Toast.makeText(this, "Please Tap The Location Button at the Top Right of the Screen", Toast.LENGTH_LONG).show();
@@ -164,9 +177,24 @@ public class MapsActivity extends AppCompatActivity
         }
         else {
             double tileHash = project(loc);
-            return (int)tileHash*1000000;
+            return (long) (tileHash*1000000);
         }
     }
+
+    public LatLng tileToLatLng(long cat) {
+        int x = (int) (cat/1000000.0);
+        int y = (int) (cat - x * 1000000.0);
+        double lng = x/Math.pow(2,18)*360-180;
+        double n = Math.PI - 2*Math.PI*y/Math.pow(2,18);
+        double lat = (180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n))));
+        LatLng temp = new LatLng(lat,lng);
+       // Toast.makeText(this, lat + " " + lng, Toast.LENGTH_LONG).show();
+        polygon = mMap.addPolygon(new PolygonOptions()
+                .add(new LatLng(lat, lng), new LatLng(lat-.00105, lng), new LatLng(lat-.00105, lng+.001383), new LatLng(lat, lng+.001383))
+                .strokeColor(Color.RED));
+        return temp;
+    }
+
     private String reverseGeocode (double lat, double lng, int max) {
         List<Address> addresses;
         try {
@@ -176,8 +204,9 @@ public class MapsActivity extends AppCompatActivity
         }catch (IOException e1) {
             return null;
         }
-        return addresses.get(0).getAddressLine(0);
+        //return addresses.get(0).getAddressLine(0);
         //return addresses.get(0).getFeatureName();
+        return addresses.get(0).getAddressLine(0);
     }
 
     @Override
@@ -215,5 +244,3 @@ public class MapsActivity extends AppCompatActivity
                 .newInstance(true).show(getSupportFragmentManager(), "dialog");
     }
 }
-
-

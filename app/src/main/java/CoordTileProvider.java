@@ -35,7 +35,7 @@ import java.io.ByteArrayOutputStream;
 /**
 * This demonstrates tile overlay coordinates.
 */
-class CoordTileProvider implements TileProvider {
+public class CoordTileProvider implements TileProvider {
 
     private static final int TILE_SIZE_DP = 256;
 

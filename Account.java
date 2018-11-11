@@ -25,12 +25,17 @@ public class Account {
     HashMap<String, Integer> userToID, HashMap<Integer, Account> idToAcc) {
 
         // check if arguments are allowed
-        checkProfanity(f);
-        checkProfanity(l);
-        checkProfanity(u);
-        checkUserValidity(u, userToID);
-        checkEmailValidity(e, loginInfo);
-        checkPasswordLength(p);
+        try {
+            checkProfanity(f);
+            checkProfanity(l);
+            checkProfanity(u);
+            checkUserValidity(u, userToID);
+            checkEmailValidity(e, loginInfo);
+            checkPasswordLength(p);
+        }
+        catch (IllegalArgumentException e) {
+                return null;
+        }
         String pass = Encrypt.encrypt(p);
 
         Account newUser = new Account(f, l, c, e, u, pass, idToAcc);
@@ -81,60 +86,60 @@ public class Account {
 
     }
 
-// change email
-public static void changeEmail(int accID, String newEmail, HashMap<String, String> loginInfo, HashMap<Integer, Account> idToAcc) {
-    Account acc = idToAcc.get(accID);
-    loginInfo.remove(acc.email);
-    acc.email = newEmail;
-    loginInfo.put(newEmail, acc.password);
-    idToAcc.put(acc.id, acc);
-}
+    // change email
+    public static void changeEmail(int accID, String newEmail, HashMap<String, String> loginInfo, HashMap<Integer, Account> idToAcc) {
+        Account acc = idToAcc.get(accID);
+        loginInfo.remove(acc.email);
+        acc.email = newEmail;
+        loginInfo.put(newEmail, acc.password);
+        idToAcc.put(acc.id, acc);
+    }
 
-// change username
-public static void changeUsername(int accID, String newUser, HashMap<String, Integer> userToID, HashMap<Integer, Account> idToAcc) {
-    Account acc = idToAcc.get(accID);
-    userToID.remove(acc.username);
-    acc.username = newUser;
-    userToID.put(newUser, acc.id);
-    idToAcc.put(acc.id, acc);
-}
+    // change username
+    public static void changeUsername(int accID, String newUser, HashMap<String, Integer> userToID, HashMap<Integer, Account> idToAcc) {
+        Account acc = idToAcc.get(accID);
+        userToID.remove(acc.username);
+        acc.username = newUser;
+        userToID.put(newUser, acc.id);
+        idToAcc.put(acc.id, acc);
+    }
 
-// change password
-public static void changePassword(int accID, String newPass, HashMap<String, String> loginInfo, HashMap<Integer, Account> idToAcc) {
-    Account acc = idToAcc.get(accID);
-    acc.password = Encrypt.encrypt(newPass);
-    loginInfo.put(acc.email, acc.password);
-    idToAcc.put(acc.id, acc);
-}
+    // change password
+    public static void changePassword(int accID, String newPass, HashMap<String, String> loginInfo, HashMap<Integer, Account> idToAcc) {
+        Account acc = idToAcc.get(accID);
+        acc.password = Encrypt.encrypt(newPass);
+        loginInfo.put(acc.email, acc.password);
+        idToAcc.put(acc.id, acc);
+    }
 
-public static String showUser(int accID, HashMap<Integer, Account> idToAcc) {
-    Account acc = idToAcc.get(accID);
-    return acc.username;
-}
+    public static String showUser(int accID, HashMap<Integer, Account> idToAcc) {
+        Account acc = idToAcc.get(accID);
+        return acc.username;
+    }
 
-public static String showFirstName(int accID, HashMap<Integer, Account> idToAcc) {
-    Account acc = idToAcc.get(accID);
-    return acc.first;
-}
+    public static String showFirstName(int accID, HashMap<Integer, Account> idToAcc) {
+        Account acc = idToAcc.get(accID);
+        return acc.first;
+    }
 
-public static String showLastName(int accID, HashMap<Integer, Account> idToAcc) {
-    Account acc = idToAcc.get(accID);
-    return acc.last;
-}
+    public static String showLastName(int accID, HashMap<Integer, Account> idToAcc) {
+        Account acc = idToAcc.get(accID);
+        return acc.last;
+    }
 
-public static String showPass(int accID, HashMap<Integer, Account> idToAcc) {
-    Account acc = idToAcc.get(accID);
-    return acc.password;
-}
+    public static String showPass(int accID, HashMap<Integer, Account> idToAcc) {
+        Account acc = idToAcc.get(accID);
+        return acc.password;
+    }
 
-public static String showEmail(int accID, HashMap<Integer, Account> idToAcc) {
-    Account acc = idToAcc.get(accID);
-    return acc.email;
-}
+    public static String showEmail(int accID, HashMap<Integer, Account> idToAcc) {
+        Account acc = idToAcc.get(accID);
+        return acc.email;
+    }
 
-public static int showID(int accID, HashMap<Integer, Account> idToAcc) {
-    Account acc = idToAcc.get(accID);
-    return acc.id;
-}
+    public static int showID(int accID, HashMap<Integer, Account> idToAcc) {
+        Account acc = idToAcc.get(accID);
+        return acc.id;
+    }
 
 }

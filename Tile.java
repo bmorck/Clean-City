@@ -2,7 +2,7 @@ import java.util.HashMap;
 
 public class Tile {
 
-private HashMap<Integer, Integer> tileToID = new HashMap<Integer, Integer>();
+private static HashMap<Integer, Integer> tileToID = new HashMap<Integer, Integer>();
 
     public static void claimTile(int tile, int id) {
         if (tile == 0)

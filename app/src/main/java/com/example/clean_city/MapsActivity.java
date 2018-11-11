@@ -16,11 +16,17 @@
 
 package com.example.clean_city;
 
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMyLocationClickListener;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.TileOverlayOptions;
+import com.google.android.gms.maps.model.TileProvider;
 
 
 import android.os.Bundle;
@@ -38,6 +44,8 @@ import android.location.Address;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
+
+
 
 /**
  * This demo shows how GMS Location can be used to check for changes to the users location.  The
@@ -76,6 +84,7 @@ public class MapsActivity extends AppCompatActivity
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         geocoder = new Geocoder(this, Locale.ENGLISH);
+                mapFragment.getMapAsync(this);
     }
 
     @Override
@@ -85,6 +94,7 @@ public class MapsActivity extends AppCompatActivity
         mMap.setOnMyLocationButtonClickListener(this);
         mMap.setOnMyLocationClickListener(this);
         enableMyLocation();
+        map.moveCamera( CameraUpdateFactory.zoomTo(18.0f) );
     }
 
     /**
@@ -99,6 +109,11 @@ public class MapsActivity extends AppCompatActivity
         } else if (mMap != null) {
             // Access to the location has been granted to the app.
             mMap.setMyLocationEnabled(true);
+            mMap.getUiSettings().setMyLocationButtonEnabled(true);
+            mMap.getUiSettings().setZoomControlsEnabled(false);
+            mMap.getUiSettings().setZoomGesturesEnabled(false);
+            mMap.setMaxZoomPreference(18);
+            mMap.setMinZoomPreference(18);
         }
     }
 
@@ -107,6 +122,8 @@ public class MapsActivity extends AppCompatActivity
         Toast.makeText(this, "MyLocation button clicked", Toast.LENGTH_SHORT).show();
         // Return false so that we don't consume the event and the default behavior still occurs
         // (the camera animates to the user's current position).
+        TileProvider coordTileProvider = new com.example.clean_city.CoordTileProvider(this.getApplicationContext());
+        mMap.addTileOverlay(new TileOverlayOptions().tileProvider(coordTileProvider));
         return false;
     }
 
@@ -115,6 +132,8 @@ public class MapsActivity extends AppCompatActivity
         //Toast.makeText(this, "Current location:\n" + location, Toast.LENGTH_LONG).show();
         double lat = location.getLatitude();
         double lng = location.getLongitude();
+        LatLng loc = new LatLng(lat, lng);
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(loc, 18));
         if (reverseGeocode(lat, lng, 1) != null) {
             String place = reverseGeocode(lat, lng, 1);
             Toast.makeText(this, place, Toast.LENGTH_LONG).show();
@@ -123,7 +142,6 @@ public class MapsActivity extends AppCompatActivity
             Toast.makeText(this, "Something is wrong!", Toast.LENGTH_LONG).show();
         }
     }
-
     private String reverseGeocode (double lat, double lng, int max) {
         List<Address> addresses;
         try {
@@ -133,9 +151,8 @@ public class MapsActivity extends AppCompatActivity
         }catch (IOException e1) {
             return null;
         }
-        //return addresses.get(0).getAddressLine(0);
+        return addresses.get(0).getAddressLine(0);
         //return addresses.get(0).getFeatureName();
-        return addresses.get(0).getLocale();
     }
 
     @Override
@@ -173,3 +190,5 @@ public class MapsActivity extends AppCompatActivity
                 .newInstance(true).show(getSupportFragmentManager(), "dialog");
     }
 }
+
+

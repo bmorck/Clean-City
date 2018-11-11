@@ -74,6 +74,8 @@ public class MapsActivity extends AppCompatActivity
     private boolean mPermissionDenied = false;
     private GoogleMap mMap;
     private Geocoder geocoder;
+    private LatLng loc;
+    private boolean gotCoords = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,6 +126,7 @@ public class MapsActivity extends AppCompatActivity
         // (the camera animates to the user's current position).
         TileProvider coordTileProvider = new com.example.clean_city.CoordTileProvider(this.getApplicationContext());
         mMap.addTileOverlay(new TileOverlayOptions().tileProvider(coordTileProvider));
+        gotCoords = true;
         return false;
     }
 
@@ -132,14 +135,36 @@ public class MapsActivity extends AppCompatActivity
         //Toast.makeText(this, "Current location:\n" + location, Toast.LENGTH_LONG).show();
         double lat = location.getLatitude();
         double lng = location.getLongitude();
-        LatLng loc = new LatLng(lat, lng);
+        loc = new LatLng(lat, lng);
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(loc, 18));
         if (reverseGeocode(lat, lng, 1) != null) {
             String place = reverseGeocode(lat, lng, 1);
             Toast.makeText(this, place, Toast.LENGTH_LONG).show();
+            getCoordinateCat();
         }
         else {
             Toast.makeText(this, "Something is wrong!", Toast.LENGTH_LONG).show();
+        }
+    }
+    private double project(LatLng loc) {
+        double siny = Math.sin(loc.latitude * Math.PI / 180);
+        siny = Math.min(Math.max(siny, -0.9999), 0.9999);
+        double lat = 256 * (0.5 + loc.longitude / 360);
+        double lng = 256 * (0.5 - Math.log((1 + siny ) / (1 - siny)) / (4 * Math.PI));
+        double x = Math.floor(lat*(Math.pow(2, 18))/256);
+        double y = Math.floor(lng*(Math.pow(2, 18))/256);
+        double sum = x + y/1000000;
+        return sum;
+    }
+    public int getCoordinateCat() {
+        if (gotCoords != true)
+        {
+            Toast.makeText(this, "Please Tap The Location Button at the Top Right of the Screen", Toast.LENGTH_LONG).show();
+            return 0;
+        }
+        else {
+            double tileHash = project(loc);
+            return (int)tileHash*1000000;
         }
     }
     private String reverseGeocode (double lat, double lng, int max) {
